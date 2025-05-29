@@ -12,8 +12,10 @@ export default function AuthPage() {
     const handleLoginWithGoogle = async () => {
         setLoading(true);
         setError(null);
+
         try {
             const result = await signInWithGoogle();
+
             if (result?.isAdmin) {
                 router.push("/admin");
             } else {
@@ -21,7 +23,22 @@ export default function AuthPage() {
             }
         } catch (err) {
             console.error("Failed to log in with Google:", err);
-            setError(err instanceof Error ? err.message : "Failed to log in with Google");
+
+            if (
+                err instanceof Error &&
+                err.message === "Sign-in popup was closed."
+            ) {
+                setError("You closed the sign-in popup. Please try again.");
+            } else if (
+                err instanceof Error &&
+                err.message === "Only GEC SKP emails are allowed"
+            ) {
+                setError("Only @gecskp.ac.in emails are allowed.");
+            } else {
+                setError(
+                    err instanceof Error ? err.message : "Failed to log in with Google"
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -46,7 +63,7 @@ export default function AuthPage() {
                 >
                     {loading ? (
                         <span className="text-lg font-medium text-gray-900 dark:text-gray-200">
-                            Logging in...
+                            Redirecting to Google...
                         </span>
                     ) : (
                         <>
@@ -60,7 +77,17 @@ export default function AuthPage() {
                     )}
                 </button>
 
-                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                {error && (
+                    <div className="text-center">
+                        <p className="text-red-500 text-sm">{error}</p>
+                        <button
+                            onClick={handleLoginWithGoogle}
+                            className="mt-2 text-sm text-blue-600 hover:underline"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
